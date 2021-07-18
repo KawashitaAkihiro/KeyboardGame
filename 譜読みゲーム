@@ -1,0 +1,264 @@
+//Keyｂoard Game
+
+//五線譜のための関数
+float line_x1 = 0;
+float line_x2 = 1250;
+float line_y = 0;
+
+//鍵盤
+float x=50;
+float y=300;
+float keyboard_x1 =0;
+float keyboard_y1 =450;
+float keyboard_y2 =700;
+float white_x = 0;
+float white_y = 0;
+float brackeyboard_x =0;
+float brackeyboard_y =525;
+
+// 音符
+int[] random_y = new int[10];
+float start_note_x =200;
+float start_note_y =350;
+float[] note_x = new float[100];
+float[] note_y = new float[100];
+
+//スコア
+int score =0;
+int score_x = 500;
+int score_y = 50;
+
+//ミス
+int miss =0;
+int miss_x = 500;
+int miss_y = 120;
+
+//クリック関係
+int click_count = 0;
+int timer0 = 0;
+
+//シーン切り替え
+int state;
+
+//文字の位置
+int text_x = width/2+270;
+int text_y = height/2 +200;
+
+//ゲームオーバー画面の装飾で使用
+float [] score_screen =new float[3000];
+
+void setup() {
+  size(1250, 700);
+  background(255);
+  state = 0;
+  random_y();
+  noStroke();
+  fill(0, 255, 200);
+  for ( int face=0; face < score_screen.length; face++ ) {
+    score_screen[face] = random(-10000, 700);
+  }
+}
+
+//ゲームのシーン分け
+void draw() {
+  background(255);
+  int nextStage = 0;
+  if (state == 0) {
+    nextStage = gamePlay();
+  } else if (state == 1) {
+    nextStage = gameOver();
+  } else if (state == 2) {
+    nextStage = gameClear();
+  }
+
+  if (state != nextStage) {
+    timer0 = millis();
+  }
+  state = nextStage;
+}
+//プレイ画面の設定
+int gamePlay() {
+  gameScene();
+  if (score == 10) {
+    return 2;
+  } else if (click_count == 10 && score < 10) {
+    return 1;
+  }
+  return 0;
+}
+
+//ゲームオーバー画面へ移動し、キーを押すと再スタート
+int gameOver() {
+  background(255);
+  for ( int face=0; face < score_screen.length; face++) {
+    score_screen[face] += 2.0;
+    float x = face*2;
+    fill(50, 100, 100);
+    textSize(30);
+    text("(>_<)", x, score_screen[face]);
+  }
+  fill(0);
+  textSize(100);
+  text("GAME OVER", text_x, text_y-25);
+  textSize(50);
+  text("PRESS the KEY to continue", text_x, text_y+250);
+  fill(255, 0, 0);
+  text("Your score : " + score+ " point", text_x+20, text_y+50);//スコアの表示
+  if (keyPressed) {
+    score = 0;
+    miss = 0;
+    click_count = 0;
+    timer0 = millis();
+    random_y();
+    return 0;
+  }
+  return 1;
+}
+//クリア画面へ移動し、キーを押すと再スタート
+int gameClear() {
+  fill(255, 200, 0);
+  textSize(100);
+  textMode(CORNER);
+  text("CLEAR!!", text_x+100, 250);
+  textSize(50);
+  text("PERSS the KEY to continue", text_x-30, 600);
+  fill(0, 155, 255);
+  text("Your score : " + score+ " point!!", text_x, 400);//スコアの表示
+  if (keyPressed) {
+    score = 0;
+    miss = 0;
+    click_count = 0;
+    timer0 = millis();
+    random_y();
+    return 0;
+  }
+  return 2;
+}
+void gameScene() {
+  //タイムリミット
+  textSize(50);
+  text("/30s", miss_x+300+200, miss_y);
+
+  //スコアと経過時間のリセット
+  int timer = millis() - timer0;//timer0に記憶させたプレイ時間を、経過時間から引く（タイマーの初期化）
+  textSize(50);
+  fill(0, 0, 255);
+  text("Score:" + score, score_x, score_y);
+  fill(255, 0, 0);
+  text("Miss:" + miss, miss_x, miss_y);
+  fill(0);
+  if (timer/1000 <20) {
+    text("Time:" + timer/1000, miss_x+300, miss_y);
+  } else {
+    fill(255, 0, 0);
+    text("Time:" + timer/1000, miss_x+300, miss_y);
+  }
+
+  strokeWeight(5);
+  //ト音記号の描画
+  {
+    fill(255);
+    arc(x, y-10, 70, 70, HALF_PI, PI + HALF_PI);
+    ellipse(x, y, 50, 50);
+    bezier(x, y-45, x+25, y-65, x+25, y-300, x-10, y-150); 
+    bezier(x-10, y-150, x, y-75, x+10, y, x+7, y+70);
+    fill(0);
+    ellipse(x, y+70, 15, 15);
+  }
+
+  //五線譜の描画
+  strokeWeight(5);
+  for (float line_y=150; line_y<=350; line_y +=50) {
+    line(line_x1, line_y, line_x2, line_y);
+  }
+
+  //黒鍵
+
+  for ( float brackeyboard_x = 100; brackeyboard_x <= 1200; brackeyboard_x += 100) {
+    fill(0);
+    rectMode(CENTER);
+    rect(brackeyboard_x, brackeyboard_y, 50, 150);
+  }
+
+  //黒鍵を白い色で塗り潰し
+  noStroke();
+  fill(255);
+  float white_x = 300;
+  float white_y = 525;
+  rect(white_x, white_y, 57, 157);
+  rect(white_x+400, white_y, 57, 157);
+  rect(white_x+700, white_y, 57, 157);
+
+  // 鍵盤の描画
+  stroke(5);
+  line(keyboard_x1, keyboard_y1, width, keyboard_y1);
+  //白鍵
+  for ( float keyboard_x1 =0; keyboard_x1 <= width; keyboard_x1  += 100) {
+    line(keyboard_x1, keyboard_y1, keyboard_x1, keyboard_y2);
+  }
+
+  //音符の描画と設定
+  stroke(5);
+  fill(0);
+  for (int i = 0; i < 10; i++) {
+    note_x[i] = start_note_x + (i*100);
+    note_y[i] = random_y[i]*25+175;
+    ellipse(note_x[i], note_y[i], 30, 20);
+    //五線譜をはみ出す低いドのときのみ音符に横線を追加
+    if (note_y[i] == 400) {
+      line(note_x[i]-25, note_y[i], note_x[i]+25, note_y[i]);
+    }
+  }
+  //30秒を超えるとゲームオーバー（10回クリックするとゲームオーバーになるプログラムを再利用）
+  if (timer/1000 >= 30) {
+    click_count = 10;
+    return;
+  }
+}
+//鍵盤をクリックしたマウス位置と表示されている音符の正誤判定
+void mouseClicked() {
+  if (mouseY > 450 && mouseButton == LEFT) {
+    if (mouseX > 0 && mouseX < 100) {
+      note_judge(400);
+    } else if (mouseX < 200) {
+      note_judge(375);
+    } else if (mouseX < 300) {
+      note_judge(350);
+    } else if (mouseX < 400) {
+      note_judge(325);
+    } else if (mouseX < 500) {
+      note_judge(300);
+    } else if (mouseX < 600) {
+      note_judge(275);
+    } else if (mouseX < 700) {
+      note_judge(250);
+    } else if (mouseX < 800) {
+      note_judge(225);
+    } else if (mouseX < 900) {
+      note_judge(200);
+    } else if (mouseX < 1000) {
+      note_judge(175);
+    } else if (mouseX < 1100) {
+      note_judge(150);
+    } else if (mouseX < 1200) {
+      note_judge(125);
+    }
+  }
+}
+
+//クリック回数・正解・不正解での処理
+void note_judge(int key) {
+  if (note_y[click_count] == key) {
+    score++;
+  } else {
+    miss++;
+  }
+  click_count++;
+}
+//音符のｙ座標を10個ランダムに表示
+void random_y() {
+  background(255);
+  for (int i = 0; i < 10; i++) {
+    random_y[i] = (int)random(0, 100) % 10;
+  }
+}
